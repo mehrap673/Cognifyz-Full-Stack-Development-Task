@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/custom.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body class="bg-light">
+  
+  <%- include('components/navbar') %>
+
+  <div class="container my-5" style="margin-top: 100px !important;">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card border-0 shadow-lg rounded-4 animate-fade-in">
+          <div class="card-body p-5">
+            <div class="text-center mb-4">
+              <h2 class="fw-bold text-gradient">🚀 <%= title %></h2>
+              <p class="text-muted">Fill in your details to get started</p>
+            </div>
+
+            <form action="/register" method="POST" class="needs-validation" novalidate>
+              <div class="row g-3">
+                
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
+                  <input type="text" name="username" class="form-control form-control-enhanced" required>
+                  <div class="invalid-feedback">Please enter a username</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                  <input type="email" name="email" class="form-control form-control-enhanced" required>
+                  <div class="invalid-feedback">Please enter a valid email</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+                  <input type="password" name="password" class="form-control form-control-enhanced" required>
+                  <div class="progress mt-2" style="height: 4px;">
+                    <div class="progress-bar" id="passwordStrength"></div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
+                  <input type="password" name="confirmPassword" class="form-control form-control-enhanced" required>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Phone <span class="text-danger">*</span></label>
+                  <input type="tel" name="phone" class="form-control form-control-enhanced" maxlength="10" required>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Age <span class="text-danger">*</span></label>
+                  <input type="number" name="age" class="form-control form-control-enhanced" min="18" max="100" required>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Gender <span class="text-danger">*</span></label>
+                  <select name="gender" class="form-select form-control-enhanced" required>
+                    <option value="">Select</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Country <span class="text-danger">*</span></label>
+                  <select name="country" class="form-select form-control-enhanced" required>
+                    <option value="">Select Country</option>
+                    <option value="India">🇮🇳 India</option>
+                    <option value="USA">🇺🇸 USA</option>
+                    <option value="UK">🇬🇧 UK</option>
+                    <option value="Canada">🇨🇦 Canada</option>
+                    <option value="Australia">🇦🇺 Australia</option>
+                  </select>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Website (Optional)</label>
+                  <input type="url" name="website" class="form-control form-control-enhanced" placeholder="https://example.com">
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Bio (Optional)</label>
+                  <textarea name="bio" class="form-control form-control-enhanced" rows="3" maxlength="200"></textarea>
+                </div>
+
+                <div class="col-12">
+                  <div class="form-check">
+                    <input type="checkbox" name="newsletter" class="form-check-input" id="newsletter">
+                    <label class="form-check-label" for="newsletter">Subscribe to newsletter</label>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="form-check">
+                    <input type="checkbox" name="terms" class="form-check-input" id="terms" required>
+                    <label class="form-check-label" for="terms">
+                      I accept the terms and conditions <span class="text-danger">*</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <button type="submit" class="btn btn-gradient-primary w-100 py-3 fw-bold">
+                    Register Now <i class="bi bi-arrow-right"></i>
+                  </button>
+                </div>
+
+                <div class="col-12 text-center">
+                  <a href="/" class="text-decoration-none">← Back to Home</a>
+                </div>
+
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/animations.js"></script>
+  
+  <script>
+    // Password strength indicator
+    document.querySelector('input[name="password"]').addEventListener('input', function() {
+      const strength = this.value.length;
+      const bar = document.getElementById('passwordStrength');
+      if (strength < 4) {
+        bar.style.width = '25%';
+        bar.className = 'progress-bar bg-danger';
+      } else if (strength < 8) {
+        bar.style.width = '50%';
+        bar.className = 'progress-bar bg-warning';
+      } else {
+        bar.style.width = '100%';
+        bar.className = 'progress-bar bg-success';
+      }
+    });
+  </script>
+</body>
+</html>

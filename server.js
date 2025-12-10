@@ -8,7 +8,6 @@ const PORT = 3000;
 
 // Temporary in-memory storage
 let registeredUsers = [];
-let loginAttempts = {};
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -17,15 +16,29 @@ app.use(express.static('public'));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Routes
+// TASK 3 ROUTES
+
+// Home - Landing Page with Bootstrap
 app.get('/', (req, res) => {
-  res.render('register', { 
-    title: 'Advanced Registration Form',
-    errors: null,
-    formData: null
+  res.render('landing', { 
+    title: 'ModernApp'
   });
 });
 
+app.get('/landing', (req, res) => {
+  res.render('landing', { 
+    title: 'ModernApp - Advanced Design'
+  });
+});
+
+// Bootstrap Registration Form
+app.get('/register-advanced', (req, res) => {
+  res.render('register-advanced', { 
+    title: 'Advanced Registration'
+  });
+});
+
+// Handle Registration Form Submission
 app.post('/register', (req, res) => {
   const formData = req.body;
   
@@ -73,6 +86,7 @@ app.post('/register', (req, res) => {
   res.redirect(`/dashboard?userId=${user.id}`);
 });
 
+// User Dashboard
 app.get('/dashboard', (req, res) => {
   const userId = parseInt(req.query.userId);
   const user = registeredUsers.find(u => u.id === userId);
@@ -88,6 +102,7 @@ app.get('/dashboard', (req, res) => {
   });
 });
 
+// All Users List
 app.get('/all-users', (req, res) => {
   res.render('all-users', {
     title: 'All Registered Users',
@@ -95,13 +110,14 @@ app.get('/all-users', (req, res) => {
   });
 });
 
+// Delete User API
 app.delete('/user/:id', (req, res) => {
   const userId = parseInt(req.params.id);
   registeredUsers = registeredUsers.filter(u => u.id !== userId);
   res.json({ success: true });
 });
 
-// API endpoint for username availability check
+// Check Username Availability API
 app.post('/check-username', (req, res) => {
   const { username } = req.body;
   const exists = registeredUsers.some(u => u.username === username);
@@ -110,4 +126,7 @@ app.post('/check-username', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`📱 Landing Page: http://localhost:${PORT}`);
+  console.log(`📝 Register: http://localhost:${PORT}/register-advanced`);
+  console.log(`👥 Users: http://localhost:${PORT}/all-users`);
 });

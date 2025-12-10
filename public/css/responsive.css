@@ -1,0 +1,169 @@
+/* Responsive Design Media Queries */
+
+/* Extra Large Devices (1400px and up) */
+@media (min-width: 1400px) {
+  .container {
+    max-width: 1320px;
+  }
+  
+  .hero-section h1 {
+    font-size: 4rem;
+  }
+}
+
+/* Large Devices (1200px and up) */
+@media (min-width: 1200px) {
+  .feature-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Medium Devices (992px and up) */
+@media (min-width: 992px) {
+  .timeline::before {
+    left: 50%;
+  }
+  
+  .timeline-item:nth-child(odd) .timeline-content {
+    margin-right: 50%;
+    padding-right: 50px;
+  }
+  
+  .timeline-item:nth-child(even) .timeline-content {
+    margin-left: 50%;
+    padding-left: 50px;
+  }
+}
+
+/* Tablet (768px and up) */
+@media (min-width: 768px) {
+  .hero-section h1 {
+    font-size: 3.5rem;
+  }
+  
+  .feature-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile Landscape (576px and up) */
+@media (min-width: 576px) {
+  .hero-section h1 {
+    font-size: 2.5rem;
+  }
+}
+
+/* Mobile Portrait (below 576px) */
+@media (max-width: 575px) {
+  .hero-section {
+    min-height: 80vh;
+  }
+  
+  .hero-section h1 {
+    font-size: 2rem;
+  }
+  
+  .hero-section p {
+    font-size: 1rem;
+  }
+  
+  .feature-grid,
+  .stat-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .feature-card {
+    padding: 20px;
+  }
+  
+  .feature-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
+  }
+  
+  .timeline::before {
+    left: 20px;
+  }
+  
+  .timeline-item .timeline-content {
+    margin-left: 60px;
+  }
+  
+  .navbar-brand {
+    font-size: 1.2rem;
+  }
+  
+  .btn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+  
+  .stat-number {
+    font-size: 2rem;
+  }
+  
+  /* Stack form columns on mobile */
+  .form-row > div {
+    width: 100%;
+  }
+  
+  /* Reduce padding on mobile */
+  .py-5 {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+  }
+  
+  .px-4 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+/* Extra Small Devices (below 400px) */
+@media (max-width: 399px) {
+  .hero-section h1 {
+    font-size: 1.75rem;
+  }
+  
+  .card {
+    padding: 15px;
+  }
+  
+  .feature-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+}
+
+/* Landscape Orientation */
+@media (orientation: landscape) and (max-height: 500px) {
+  .hero-section {
+    min-height: auto;
+    padding: 50px 0;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .navbar,
+  .footer,
+  .btn {
+    display: none;
+  }
+  
+  body {
+    background: white;
+  }
+  
+  .card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+}
