@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/custom.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  
+  <style>
+    .api-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      transition: all 0.3s;
+    }
+    
+    .api-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+    
+    .method-badge {
+      font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 0.8rem;
+    }
+    
+    .method-get { background: #28a745; color: white; }
+    .method-post { background: #007bff; color: white; }
+    .method-put { background: #ffc107; color: black; }
+    .method-patch { background: #17a2b8; color: white; }
+    .method-delete { background: #dc3545; color: white; }
+    
+    .response-box {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 15px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+    }
+    
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-box {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: bold;
+      display: block;
+    }
+    
+    .user-card-mini {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-left: 4px solid #667eea;
+    }
+  </style>
+</head>
+<body class="bg-light">
+  
+  <%- include('components/navbar') %>
+
+  <div class="container my-5" style="margin-top: 100px !important;">
+    
+    <!-- Header -->
+    <div class="text-center mb-5">
+      <h1 class="display-4 fw-bold text-gradient">🔌 API Dashboard</h1>
+      <p class="lead text-muted">Interactive RESTful API Testing Interface</p>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-grid" id="statsContainer">
+      <div class="stat-box">
+        <span class="stat-number" id="totalUsers">0</span>
+        <span>Total Users</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-number" id="avgAge">0</span>
+        <span>Average Age</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-number" id="subscribers">0</span>
+        <span>Subscribers</span>
+      </div>
+    </div>
+
+    <div class="row">
+      
+      <!-- Left Column - API Actions -->
+      <div class="col-lg-6">
+        <h3 class="mb-4">API Actions</h3>
+        
+        <!-- Get All Users -->
+        <div class="api-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0"><span class="method-badge method-get">GET</span> Get All Users</h5>
+            <button class="btn btn-sm btn-success" onclick="getAllUsers()">
+              <i class="bi bi-play-fill"></i> Execute
+            </button>
+          </div>
+          <code>/api/users</code>
+        </div>
+
+        <!-- Get User by ID -->
+        <div class="api-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0"><span class="method-badge method-get">GET</span> Get User by ID</h5>
+          </div>
+          <code>/api/users/:id</code>
+          <div class="mt-3">
+            <div class="input-group">
+              <input type="number" class="form-control" id="getUserId" placeholder="User ID" min="1">
+              <button class="btn btn-success" onclick="getUserById()">
+                <i class="bi bi-play-fill"></i> Execute
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Create User -->
+        <div class="api-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0"><span class="method-badge method-post">POST</span> Create User</h5>
+            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+              <i class="bi bi-plus-circle"></i> Open Form
+            </button>
+          </div>
+          <code>/api/users</code>
+        </div>
+
+        <!-- Update User -->
+        <div class="api-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0"><span class="method-badge method-put">PUT</span> Update User</h5>
+          </div>
+          <code>/api/users/:id</code>
+          <div class="mt-3">
+            <div class="input-group">
+              <input type="number" class="form-control" id="updateUserId" placeholder="User ID" min="1">
+              <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#updateUserModal" onclick="loadUserForUpdate()">
+                <i class="bi bi-pencil"></i> Update
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delete User -->
+        <div class="api-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0"><span class="method-badge method-delete">DELETE</span> Delete User</h5>
+          </div>
+          <code>/api/users/:id</code>
+          <div class="mt-3">
+            <div class="input-group">
+              <input type="number" class="form-control" id="deleteUserId" placeholder="User ID" min="1">
+              <button class="btn btn-danger" onclick="deleteUser()">
+                <i class="bi bi-trash"></i> Delete
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Users -->
+        <div class="api-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0"><span class="method-badge method-get">GET</span> Search Users</h5>
+          </div>
+          <code>/api/users/search/:query</code>
+          <div class="mt-3">
+            <div class="input-group">
+              <input type="text" class="form-control" id="searchQuery" placeholder="Search term">
+              <button class="btn btn-success" onclick="searchUsers()">
+                <i class="bi bi-search"></i> Search
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Get Statistics -->
+        <div class="api-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0"><span class="method-badge method-get">GET</span> Get Statistics</h5>
+            <button class="btn btn-sm btn-success" onclick="getStats()">
+              <i class="bi bi-play-fill"></i> Execute
+            </button>
+          </div>
+          <code>/api/stats</code>
+        </div>
+
+      </div>
+
+      <!-- Right Column - Response -->
+      <div class="col-lg-6">
+        <h3 class="mb-4">Response</h3>
+        
+        <div class="loading" id="loading">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2">Processing request...</p>
+        </div>
+
+        <div class="response-box" id="responseBox">
+          <p class="text-muted">Execute an API action to see the response...</p>
+        </div>
+
+        <!-- Users List -->
+        <div class="mt-4">
+          <h4>Users List</h4>
+          <div id="usersList"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Create User Modal -->
+  <div class="modal fade" id="createUserModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Create New User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="createUserForm">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Username *</label>
+                <input type="text" class="form-control" name="username" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email *</label>
+                <input type="email" class="form-control" name="email" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Password *</label>
+                <input type="password" class="form-control" name="password" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Confirm Password *</label>
+                <input type="password" class="form-control" name="confirmPassword" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Phone *</label>
+                <input type="tel" class="form-control" name="phone" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Age *</label>
+                <input type="number" class="form-control" name="age" min="18" max="100" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Gender *</label>
+                <select class="form-select" name="gender" required>
+                  <option value="">Select</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Country *</label>
+                <select class="form-select" name="country" required>
+                  <option value="">Select</option>
+                  <option value="India">India</option>
+                  <option value="USA">USA</option>
+                  <option value="UK">UK</option>
+                  <option value="Canada">Canada</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Bio</label>
+                <textarea class="form-control" name="bio" rows="2"></textarea>
+              </div>
+              <div class="col-12">
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" name="terms" id="terms" required>
+                  <label class="form-check-label" for="terms">Accept terms *</label>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="createUser()">Create User</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update User Modal -->
+  <div class="modal fade" id="updateUserModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Update User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="updateUserForm">
+            <div class="mb-3">
+              <label class="form-label">Bio</label>
+              <textarea class="form-control" name="bio" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Website</label>
+              <input type="url" class="form-control" name="website">
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" name="newsletter" id="newsletter">
+              <label class="form-check-label" for="newsletter">Newsletter subscription</label>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-warning" onclick="updateUser()">Update</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // API Helper Functions
+    const API_BASE = '/api';
+    
+    function showLoading() {
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('responseBox').innerHTML = '';
+    }
+    
+    function hideLoading() {
+      document.getElementById('loading').style.display = 'none';
+    }
+    
+    function displayResponse(data, status = 'success') {
+      hideLoading();
+      const responseBox = document.getElementById('responseBox');
+      const statusClass = status === 'success' ? 'text-success' : 'text-danger';
+      responseBox.innerHTML = `
+        <div class="${statusClass} mb-2">
+          <strong>${status.toUpperCase()}</strong>
+        </div>
+        <pre>${JSON.stringify(data, null, 2)}</pre>
+      `;
+    }
+    
+    function displayUsers(users) {
+      const usersList = document.getElementById('usersList');
+      if (!users || users.length === 0) {
+        usersList.innerHTML = '<p class="text-muted">No users found</p>';
+        return;
+      }
+      
+      usersList.innerHTML = users.map(user => `
+        <div class="user-card-mini">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <strong>${user.username}</strong> - ${user.email}
+              <br><small class="text-muted">ID: ${user.id} | ${user.country}</small>
+            </div>
+            <div>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteUserQuick(${user.id})">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // API Functions
+    async function getAllUsers() {
+      showLoading();
+      try {
+        const response = await fetch(`${API_BASE}/users`);
+        const data = await response.json();
+        displayResponse(data);
+        displayUsers(data.data);
+      } catch (error) {
+        displayResponse({ error: error.message }, 'error');
+      }
+    }
+    
+    async function getUserById() {
+      const id = document.getElementById('getUserId').value;
+      if (!id) return alert('Please enter a user ID');
+      
+      showLoading();
+      try {
+        const response = await fetch(`${API_BASE}/users/${id}`);
+        const data = await response.json();
+        displayResponse(data, response.ok ? 'success' : 'error');
+      } catch (error) {
+        displayResponse({ error: error.message }, 'error');
+      }
+    }
+    
+    async function createUser() {
+      const form = document.getElementById('createUserForm');
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData);
+      
+      showLoading();
+      try {
+        const response = await fetch(`${API_BASE}/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        displayResponse(result, response.ok ? 'success' : 'error');
+        
+        if (response.ok) {
+          form.reset();
+          bootstrap.Modal.getInstance(document.getElementById('createUserModal')).hide();
+          getAllUsers();
+          getStats();
+        }
+      } catch (error) {
+        displayResponse({ error: error.message }, 'error');
+      }
+    }
+    
+    async function loadUserForUpdate() {
+      const id = document.getElementById('updateUserId').value;
+      if (!id) return alert('Please enter a user ID');
+      
+      try {
+        const response = await fetch(`${API_BASE}/users/${id}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          const form = document.getElementById('updateUserForm');
+          form.querySelector('[name="bio"]').value = data.data.bio || '';
+          form.querySelector('[name="website"]').value = data.data.website || '';
+          form.querySelector('[name="newsletter"]').checked = data.data.newsletter || false;
+        }
+      } catch (error) {
+        alert('Error loading user data');
+      }
+    }
+    
+    async function updateUser() {
+      const id = document.getElementById('updateUserId').value;
+      const form = document.getElementById('updateUserForm');
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData);
+      data.newsletter = form.querySelector('[name="newsletter"]').checked;
+      
+      showLoading();
+      try {
+        const response = await fetch(`${API_BASE}/users/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        displayResponse(result, response.ok ? 'success' : 'error');
+        
+        if (response.ok) {
+          bootstrap.Modal.getInstance(document.getElementById('updateUserModal')).hide();
+          getAllUsers();
+        }
+      } catch (error) {
+        displayResponse({ error: error.message }, 'error');
+      }
+    }
+    
+    async function deleteUser() {
+      const id = document.getElementById('deleteUserId').value;
+      if (!id) return alert('Please enter a user ID');
+      if (!confirm('Are you sure?')) return;
+      
+      showLoading();
+      try {
+        const response = await fetch(`${API_BASE}/users/${id}`, {
+          method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        displayResponse(data, response.ok ? 'success' : 'error');
+        
+        if (response.ok) {
+          getAllUsers();
+          getStats();
+        }
+      } catch (error) {
+        displayResponse({ error: error.message }, 'error');
+      }
+    }
+    
+    async function deleteUserQuick(id) {
+      if (!confirm('Delete this user?')) return;
+      document.getElementById('deleteUserId').value = id;
+      await deleteUser();
+    }
+    
+    async function searchUsers() {
+      const query = document.getElementById('searchQuery').value;
+      if (!query) return alert('Please enter a search term');
+      
+      showLoading();
+      try {
+        const response = await fetch(`${API_BASE}/users/search/${query}`);
+        const data = await response.json();
+        displayResponse(data);
+        displayUsers(data.data);
+      } catch (error) {
+        displayResponse({ error: error.message }, 'error');
+      }
+    }
+    
+    async function getStats() {
+      showLoading();
+      try {
+        const response = await fetch(`${API_BASE}/stats`);
+        const data = await response.json();
+        displayResponse(data);
+        
+        if (data.success) {
+          document.getElementById('totalUsers').textContent = data.data.totalUsers;
+          document.getElementById('avgAge').textContent = data.data.averageAge;
+          document.getElementById('subscribers').textContent = data.data.newsletterSubscribers;
+        }
+      } catch (error) {
+        displayResponse({ error: error.message }, 'error');
+      }
+    }
+    
+    // Load initial data
+    window.addEventListener('DOMContentLoaded', () => {
+      getAllUsers();
+      getStats();
+    });
+  </script>
+</body>
+</html>
