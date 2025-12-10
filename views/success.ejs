@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>✅ <%= title %></h1>
+    </header>
+
+    <nav>
+      <a href="/">Register</a>
+      <a href="/users">View Users</a>
+    </nav>
+
+    <div class="card success-card">
+      <div class="success-icon">🎉</div>
+      <h2>Welcome, <%= user.name %>!</h2>
+      <p>Your registration was successful.</p>
+
+      <div class="user-details">
+        <div class="detail-row">
+          <span class="label">ID:</span>
+          <span class="value">#<%= user.id %></span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Email:</span>
+          <span class="value"><%= user.email %></span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Age:</span>
+          <span class="value"><%= user.age %> years</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Country:</span>
+          <span class="value"><%= user.country %></span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Registered:</span>
+          <span class="value"><%= user.timestamp %></span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <a href="/" class="btn-secondary">Register Another</a>
+        <a href="/users" class="btn-primary">View All Users</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

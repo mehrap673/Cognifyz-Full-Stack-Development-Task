@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+
+    .error-icon {
+      font-size: 5rem;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #e74c3c;
+      margin-bottom: 20px;
+    }
+
+    .error-list {
+      background: #fee;
+      border-left: 4px solid #e74c3c;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+
+    .error-list ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .error-list li {
+      padding: 10px 0;
+      border-bottom: 1px solid #fdd;
+    }
+
+    .error-list li:last-child {
+      border-bottom: none;
+    }
+
+    .error-list li::before {
+      content: '❌ ';
+      margin-right: 10px;
+    }
+
+    .btn-back {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 700;
+      transition: transform 0.2s;
+    }
+
+    .btn-back:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="error-icon">⚠️</div>
+    <h1><%= title %></h1>
+    
+    <div class="error-list">
+      <ul>
+        <% errors.forEach(error => { %>
+          <li><%= error %></li>
+        <% }); %>
+      </ul>
+    </div>
+
+    <a href="/" class="btn-back">← Back to Registration</a>
+  </div>
+</body>
+</html>

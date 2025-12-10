@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🚀 <%= title %></h1>
+      <p class="subtitle">Server-Side Rendering with Express & EJS</p>
+    </header>
+
+    <nav>
+      <a href="/" class="active">Register</a>
+      <a href="/users">View Users</a>
+    </nav>
+
+    <% if (locals.error) { %>
+      <div class="alert error">
+        ⚠️ <%= error %>
+      </div>
+    <% } %>
+
+    <div class="card">
+      <form action="/submit" method="POST">
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" name="name" placeholder="Enter your name" required>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" placeholder="your@email.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="age">Age</label>
+          <input type="number" id="age" name="age" min="1" max="150" placeholder="25" required>
+        </div>
+
+        <div class="form-group">
+          <label for="country">Country</label>
+          <select id="country" name="country" required>
+            <option value="">Select Country</option>
+            <option value="India">India</option>
+            <option value="USA">USA</option>
+            <option value="UK">UK</option>
+            <option value="Canada">Canada</option>
+            <option value="Australia">Australia</option>
+            <option value="Germany">Germany</option>
+            <option value="France">France</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-primary">Submit Registration</button>
+      </form>
+    </div>
+
+    <footer>
+      <p>© <%= currentYear %> - Server-Side Rendering Demo</p>
+    </footer>
+  </div>
+</body>
+</html>
