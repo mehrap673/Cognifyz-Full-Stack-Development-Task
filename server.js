@@ -38,7 +38,7 @@ app.get('/register-advanced', (req, res) => {
   });
 });
 
-// Handle Registration Form Submission
+// Add this route for handling skills array
 app.post('/register', (req, res) => {
   const formData = req.body;
   
@@ -53,7 +53,7 @@ app.post('/register', (req, res) => {
     });
   }
 
-  // Check for duplicate username/email
+  // Check for duplicate
   const duplicate = registeredUsers.find(
     u => u.username === formData.username || u.email === formData.email
   );
@@ -66,7 +66,7 @@ app.post('/register', (req, res) => {
     });
   }
 
-  // Store validated data
+  // Store validated data with new fields
   const user = {
     id: registeredUsers.length + 1,
     username: formData.username,
@@ -75,8 +75,11 @@ app.post('/register', (req, res) => {
     age: parseInt(formData.age),
     gender: formData.gender,
     country: formData.country,
+    postalCode: formData.postalCode || 'N/A',
+    creditCard: formData.creditCard ? '****' + formData.creditCard.slice(-4) : 'N/A',
     website: formData.website || 'N/A',
     bio: formData.bio || 'No bio provided',
+    skills: Array.isArray(formData['skill[]']) ? formData['skill[]'].filter(s => s) : [],
     newsletter: formData.newsletter === 'on',
     registeredAt: new Date().toLocaleString('en-IN')
   };
@@ -85,6 +88,7 @@ app.post('/register', (req, res) => {
 
   res.redirect(`/dashboard?userId=${user.id}`);
 });
+
 
 // User Dashboard
 app.get('/dashboard', (req, res) => {
