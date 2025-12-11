@@ -8,16 +8,23 @@ const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
+const compression = require('compression');
 const path = require('path');
 
 const connectDB = require('./config/database');
+const logger = require('./config/logger');
+const redisClient = require('./config/redis');
 const passport = require('./config/passport');
 const User = require('./models/User');
 const { protect, authorize, optionalAuth } = require('./middleware/auth');
 const { sendTokenResponse } = require('./utils/jwt');
 const { apiLimiter, authLimiter, externalApiLimiter } = require('./middleware/rateLimiter');
 const { errorHandler } = require('./middleware/errorHandler');
+const requestLogger = require('./middleware/requestLogger');
+const { cacheMiddleware, clearCache } = require('./middleware/cache');
 const ExternalApiService = require('./services/externalApi');
+const { sendEmail } = require('./jobs/emailQueue');
+const { scheduleAnalytics, scheduleCleanup } = require('./jobs/dataProcessingQueue');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,8 +32,14 @@ const PORT = process.env.PORT || 3000;
 // Connect to MongoDB
 connectDB();
 
-// Security Middleware - FIX HELMET CSP HERE
-// Security Middleware - FIX HELMET CSP HERE
+// Schedule background jobs
+scheduleAnalytics();
+scheduleCleanup();
+
+// Compression middleware
+app.use(compression());
+
+// Security Middleware
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -54,7 +67,7 @@ app.use(
         ],
         connectSrc: [
           "'self'",
-          "https://cdn.jsdelivr.net",  // ADD THIS LINE
+          "https://cdn.jsdelivr.net",
           "https://api.openweathermap.org",
           "https://newsapi.org",
           "https://v6.exchangerate-api.com",
@@ -82,11 +95,13 @@ app.use(
   })
 );
 
-
 app.use(mongoSanitize());
 app.use(xss());
 app.use(hpp());
 app.use(cors());
+
+// Request logging
+app.use(requestLogger);
 
 // Body Parser
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -114,7 +129,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.use('/api', apiLimiter);
 
 // ============================================
-// AUTHENTICATION ROUTES (with rate limiting)
+// AUTHENTICATION ROUTES
 // ============================================
 
 app.post('/api/auth/register', authLimiter, async (req, res, next) => {
@@ -156,6 +171,15 @@ app.post('/api/auth/register', authLimiter, async (req, res, next) => {
       newsletter: newsletter || false
     });
     
+    // Send welcome email (background job)
+    await sendEmail({
+      to: user.email,
+      subject: 'Welcome to ModernApp!',
+      body: `Hi ${user.username}, welcome to our platform!`,
+      type: 'welcome'
+    });
+    
+    logger.info(`New user registered: ${user.username}`);
     sendTokenResponse(user, 201, res);
     
   } catch (error) {
@@ -164,8 +188,6 @@ app.post('/api/auth/register', authLimiter, async (req, res, next) => {
 });
 
 app.post('/api/auth/login', authLimiter, async (req, res, next) => {
-  console.log('🔐 Login attempt:', req.body.email); // DEBUG
-  
   try {
     const { email, password } = req.body;
     
@@ -177,7 +199,6 @@ app.post('/api/auth/login', authLimiter, async (req, res, next) => {
     }
     
     const user = await User.findOne({ email }).select('+password');
-    console.log('👤 User found:', !!user); // DEBUG
     
     if (!user) {
       return res.status(401).json({
@@ -187,7 +208,6 @@ app.post('/api/auth/login', authLimiter, async (req, res, next) => {
     }
     
     const isMatch = await user.comparePassword(password);
-    console.log('🔑 Password match:', isMatch); // DEBUG
     
     if (!isMatch) {
       return res.status(401).json({
@@ -199,11 +219,11 @@ app.post('/api/auth/login', authLimiter, async (req, res, next) => {
     user.lastLogin = Date.now();
     await user.save();
     
-    console.log('✅ Login successful'); // DEBUG
+    logger.info(`User logged in: ${user.username}`);
     sendTokenResponse(user, 200, res);
     
   } catch (error) {
-    console.error('❌ Login error:', error); // DEBUG
+    logger.error('Login error:', error);
     next(error);
   }
 });
@@ -223,13 +243,9 @@ app.get('/api/auth/google/callback',
   }),
   async (req, res) => {
     try {
-      console.log('🔐 Google callback for:', req.user.email);
-      
-      // Generate JWT token
       const { generateToken } = require('./utils/jwt');
       const token = generateToken(req.user._id);
       
-      // Set cookie
       res.cookie('token', token, {
         expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         httpOnly: true,
@@ -237,14 +253,13 @@ app.get('/api/auth/google/callback',
         sameSite: 'lax'
       });
       
-      console.log('✅ Google login successful, redirecting...');
+      logger.info(`Google OAuth login: ${req.user.email}`);
       
-      // Redirect with token in URL as fallback
       const redirectUrl = req.user.role === 'admin' ? '/api-dashboard' : '/external-apis';
       res.redirect(`${redirectUrl}?token=${token}`);
       
     } catch (error) {
-      console.error('❌ Google callback error:', error);
+      logger.error('Google callback error:', error);
       res.redirect('/login?error=auth_failed');
     }
   }
@@ -272,15 +287,14 @@ app.get('/api/auth/me', protect, async (req, res) => {
 });
 
 // ============================================
-// EXTERNAL API ROUTES (with rate limiting)
+// EXTERNAL API ROUTES (with caching)
 // ============================================
 
-// Weather API
-app.get('/api/external/weather/:city', protect, externalApiLimiter, async (req, res, next) => {
+// Weather API (10 min cache)
+app.get('/api/external/weather/:city', protect, cacheMiddleware(600), externalApiLimiter, async (req, res, next) => {
   try {
     const weather = await ExternalApiService.getWeather(req.params.city);
     
-    // Track API usage
     req.user.apiCallsCount += 1;
     req.user.lastApiCall = Date.now();
     await req.user.save();
@@ -294,11 +308,10 @@ app.get('/api/external/weather/:city', protect, externalApiLimiter, async (req, 
   }
 });
 
-// News API
-// News API - FIX country parameter
-app.get('/api/external/news', protect, externalApiLimiter, async (req, res, next) => {
+// News API (5 min cache)
+app.get('/api/external/news', protect, cacheMiddleware(300), externalApiLimiter, async (req, res, next) => {
   try {
-    const { country = 'us', category = 'technology' } = req.query;  // Changed default from 'in' to 'us'
+    const { country = 'us', category = 'technology' } = req.query;
     const news = await ExternalApiService.getNews(country, category);
     
     req.user.apiCallsCount += 1;
@@ -310,7 +323,7 @@ app.get('/api/external/news', protect, externalApiLimiter, async (req, res, next
       data: news
     });
   } catch (error) {
-    console.error('News route error:', error);
+    logger.error('News route error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to fetch news'
@@ -318,9 +331,8 @@ app.get('/api/external/news', protect, externalApiLimiter, async (req, res, next
   }
 });
 
-
-// Exchange Rates API
-app.get('/api/external/exchange/:base?', protect, externalApiLimiter, async (req, res, next) => {
+// Exchange Rates API (1 hour cache)
+app.get('/api/external/exchange/:base?', protect, cacheMiddleware(3600), externalApiLimiter, async (req, res, next) => {
   try {
     const base = req.params.base || 'USD';
     const rates = await ExternalApiService.getExchangeRates(base);
@@ -366,8 +378,8 @@ app.get('/api/external/quote', protect, externalApiLimiter, async (req, res, nex
   }
 });
 
-// GitHub User API
-app.get('/api/external/github/:username', protect, externalApiLimiter, async (req, res, next) => {
+// GitHub User API (30 min cache)
+app.get('/api/external/github/:username', protect, cacheMiddleware(1800), externalApiLimiter, async (req, res, next) => {
   try {
     const githubUser = await ExternalApiService.getGitHubUser(req.params.username);
     
@@ -385,7 +397,7 @@ app.get('/api/external/github/:username', protect, externalApiLimiter, async (re
 });
 
 // ============================================
-// CRUD ROUTES (Keep existing ones)
+// CRUD ROUTES
 // ============================================
 
 app.get('/api/users', protect, authorize('admin'), async (req, res, next) => {
@@ -451,7 +463,58 @@ app.delete('/api/users/:id', protect, authorize('admin'), async (req, res, next)
   }
 });
 
+// ============================================
+// ADMIN ROUTES
+// ============================================
 
+// Clear cache endpoint (admin only)
+app.delete('/api/admin/cache/:pattern?', protect, authorize('admin'), async (req, res) => {
+  try {
+    const pattern = req.params.pattern || '*';
+    const count = await clearCache(pattern);
+    
+    logger.info(`Admin cleared ${count} cache entries`);
+    res.json({
+      success: true,
+      message: `Cleared ${count} cache entries`,
+      pattern
+    });
+  } catch (error) {
+    logger.error('Cache clear error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to clear cache'
+    });
+  }
+});
+
+// View logs endpoint (admin only)
+app.get('/api/admin/logs', protect, authorize('admin'), (req, res) => {
+  const fs = require('fs');
+  const logsDir = path.join(__dirname, 'logs');
+  
+  try {
+    if (!fs.existsSync(logsDir)) {
+      return res.json({
+        success: true,
+        logs: [],
+        message: 'No logs directory found'
+      });
+    }
+
+    const files = fs.readdirSync(logsDir);
+    res.json({
+      success: true,
+      logs: files
+    });
+  } catch (error) {
+    logger.error('Log reading error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to read logs'
+    });
+  }
+});
 
 // ============================================
 // VIEW ROUTES
@@ -467,14 +530,14 @@ app.get('/', optionalAuth, (req, res) => {
 app.get('/login', (req, res) => {
   res.render('login', { 
     title: 'Login',
-    user: null  // ADD THIS
+    user: null
   });
 });
 
 app.get('/register-advanced', (req, res) => {
   res.render('register-advanced', { 
     title: 'Register',
-    user: null  // ADD THIS
+    user: null
   });
 });
 
@@ -499,7 +562,6 @@ app.get('/external-apis', protect, (req, res) => {
   });
 });
 
-// Add this route if you have all-users page
 app.get('/all-users', optionalAuth, async (req, res) => {
   try {
     const users = await User.find();
@@ -509,17 +571,32 @@ app.get('/all-users', optionalAuth, async (req, res) => {
       user: req.user || null
     });
   } catch (error) {
+    logger.error('All users error:', error);
     res.status(500).send('Error fetching users');
   }
 });
 
+// ============================================
+// ERROR HANDLER (must be last)
+// ============================================
 
-// Error handler (must be last)
 app.use(errorHandler);
 
+// ============================================
+// START SERVER
+// ============================================
+
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  logger.info(`✅ Server running on http://localhost:${PORT}`);
   console.log(`🔐 Login: http://localhost:${PORT}/login`);
   console.log(`📝 Register: http://localhost:${PORT}/register-advanced`);
   console.log(`🌍 External APIs: http://localhost:${PORT}/external-apis`);
+  console.log(`\n📦 Advanced Features Enabled:`);
+  console.log(`   ✅ Redis Caching`);
+  console.log(`   ✅ Winston Logging (logs/ folder)`);
+  console.log(`   ✅ Request Logging (Morgan)`);
+  console.log(`   ✅ Background Jobs (Bull Queue)`);
+  console.log(`   ✅ Email Queue`);
+  console.log(`   ✅ Data Processing Queue`);
+  console.log(`   ✅ Compression`);
 });

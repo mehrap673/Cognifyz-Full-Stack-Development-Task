@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "C:\\Cogznify\\server-side-rendering-app\\logs\\.d8c45e5fc6403f3ceb52e1a1335dba4c4add6391-audit.json",
+    "files": [
+        {
+            "date": 1765468844613,
+            "name": "C:\\Cogznify\\server-side-rendering-app\\logs\\combined-2025-12-11.log",
+            "hash": "5dcab0815337af3e0de4af44bd2da43f3d197d802c575d37b5a64c99509a4f1c"
+        }
+    ],
+    "hashType": "sha256"
+}
