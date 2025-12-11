@@ -17,13 +17,61 @@
         <li class="nav-item">
           <a class="nav-link" href="/#about">About</a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/all-users">Users</a>
-        </li>
-        <li class="nav-item">
-          <a class="btn btn-gradient-primary ms-2" href="/register-advanced">Register</a>
-        </li>
+        
+        <% if (typeof user !== 'undefined' && user) { %>
+          <!-- Logged In User -->
+          <li class="nav-item">
+            <a class="nav-link" href="/external-apis">APIs</a>
+          </li>
+          <% if (user.role === 'admin') { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/api-dashboard">Dashboard</a>
+            </li>
+          <% } else { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/dashboard">Dashboard</a>
+            </li>
+          <% } %>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+              <% if (user.avatar) { %>
+                <img src="<%= user.avatar %>" width="30" height="30" class="rounded-circle me-1" alt="Avatar">
+              <% } %>
+              <%= user.username %>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="/dashboard"><i class="bi bi-person"></i> Profile</a></li>
+              <li><a class="dropdown-item" href="/external-apis"><i class="bi bi-globe"></i> External APIs</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="#" onclick="logout()"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+            </ul>
+          </li>
+        <% } else { %>
+          <!-- Not Logged In -->
+          <li class="nav-item">
+            <a class="nav-link" href="/login">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-gradient-primary ms-2" href="/register-advanced">Register</a>
+          </li>
+        <% } %>
       </ul>
     </div>
   </div>
 </nav>
+
+<% if (typeof user !== 'undefined' && user) { %>
+<script>
+  async function logout() {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      window.location.href = '/';
+    }
+  }
+</script>
+<% } %>

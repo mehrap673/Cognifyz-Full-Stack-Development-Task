@@ -21,8 +21,16 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Password is required'],
     minlength: [8, 'Password must be at least 8 characters'],
-    select: false // Don't return password by default
+    select: false
   },
+  // OAuth fields
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  avatar: String,
+  
   phone: {
     type: String,
     required: true,
@@ -63,6 +71,13 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  // API Usage Tracking
+  apiCallsCount: {
+    type: Number,
+    default: 0
+  },
+  lastApiCall: Date,
+  
   lastLogin: Date,
   createdAt: {
     type: Date,
@@ -74,7 +89,6 @@ const UserSchema = new mongoose.Schema({
   }
 });
 
-// Hash password before saving
 UserSchema.pre('save', async function(next) {
   if (!this.isModified('password')) {
     return next();
@@ -85,18 +99,15 @@ UserSchema.pre('save', async function(next) {
   next();
 });
 
-// Update timestamp on save
 UserSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
 
-// Compare password method
 UserSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Remove sensitive data when converting to JSON
 UserSchema.methods.toJSON = function() {
   const user = this.toObject();
   delete user.password;
